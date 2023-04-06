@@ -23,6 +23,12 @@ jobs:
         run: ./mvnw package -Dnative -DskipTests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+      - name: Archive executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: runner-linux
+          path: ./target/*-runner
+
   build-win64:
     runs-on: windows-latest
     env:
@@ -48,6 +54,12 @@ jobs:
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
         shell: cmd
+      - name: Archive executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: runner-win
+          path: ./target/*-runner
+
   build-macos:
     runs-on: macos-latest
     env:
@@ -67,3 +79,8 @@ jobs:
         run: ./mvnw package -Dnative  -DskipTests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+      - name: Archive executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: runner-mac
+          path: ./target/*-runner
