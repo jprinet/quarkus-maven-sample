@@ -9,6 +9,8 @@ jobs:
     env:
       OS: linux
     steps:
+      - name: Environment
+        run: set
       - uses: actions/checkout@v2
       - name: Install graalvm
         uses: DeLaGuardo/setup-graalvm@4.0
@@ -51,6 +53,8 @@ jobs:
     env:
       OS: macos
     steps:
+      - name: Environment
+        run: set
       - uses: actions/checkout@v2
       - name: Install graalvm
         uses: DeLaGuardo/setup-graalvm@4.0
