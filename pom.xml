@@ -137,6 +137,16 @@
                         </ignoredProperties>
                         <fileSets>
                           <fileSet>
+                            <name>quarkusProperties</name>
+                            <paths>
+                              <path>src/main/resources</path>
+                            </paths>
+                            <includes>
+                              <include>application.properties</include>
+                            </includes>
+                            <normalization>RELATIVE_PATH</normalization>
+                          </fileSet>
+                          <fileSet>
                             <name>generatedSourcesDirectory</name>
                           </fileSet>
 <!--                          <fileSet>-->
