@@ -29,36 +29,36 @@ jobs:
           name: runner-linux
           path: ./target/*-runner
 
-  build-win64:
-    runs-on: windows-latest
-    env:
-      OS: windows
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install graalvm
-        uses: DeLaGuardo/setup-graalvm@4.0
-        with:
-          graalvm: '22.3.0'
-          java: 'java17'
-      - name: Install native-image
-        run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
-        shell: cmd
-      - name: Configure Pagefile
-        # Increased the page-file size due to memory-consumption of native-image command
-        # For details see https://github.com/actions/virtual-environments/issues/785
-        uses: al-cheb/configure-pagefile-action@v1.2
-      - name: Build native executable
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          mvnw package -Dnative -DskipTests
-        env:
-          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
-        shell: cmd
-      - name: Archive executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: runner-win
-          path: ./target/*-runner
+#  build-win64:
+#    runs-on: windows-latest
+#    env:
+#      OS: windows
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Install graalvm
+#        uses: DeLaGuardo/setup-graalvm@4.0
+#        with:
+#          graalvm: '22.3.0'
+#          java: 'java17'
+#      - name: Install native-image
+#        run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
+#        shell: cmd
+#      - name: Configure Pagefile
+#        # Increased the page-file size due to memory-consumption of native-image command
+#        # For details see https://github.com/actions/virtual-environments/issues/785
+#        uses: al-cheb/configure-pagefile-action@v1.2
+#      - name: Build native executable
+#        run: |
+#          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+#          mvnw package -Dnative -DskipTests
+#        env:
+#          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+#        shell: cmd
+#      - name: Archive executable
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: runner-win
+#          path: ./target/*-runner
 
   build-macos:
     runs-on: macos-latest
