@@ -19,8 +19,15 @@ jobs:
           java: 'java17'
       - name: Install native-image
         run: gu install native-image
+      - name: Build Quarkus Maven extension
+        run: |
+          cd quarkus-custom-user-data-maven-extension
+          ./mvnw install
+          cd ..
       - name: Build native executable
-        run: ./mvnw package -Dnative -DskipTests
+        run: |
+          cd quarkus-maven-sample-project
+          ./mvnw package -Dnative -DskipTests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
       - name: Archive executable
@@ -60,27 +67,27 @@ jobs:
 #          name: runner-win
 #          path: ./target/*-runner
 
-  build-macos:
-    runs-on: macos-latest
-    env:
-      OS: macos
-    steps:
-      - name: Environment
-        run: set
-      - uses: actions/checkout@v2
-      - name: Install graalvm
-        uses: DeLaGuardo/setup-graalvm@4.0
-        with:
-          graalvm: '22.3.0'
-          java: 'java17'
-      - name: Install native-image
-        run: gu install native-image
-      - name: Build native executable
-        run: ./mvnw package -Dnative  -DskipTests
-        env:
-          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
-      - name: Archive executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: runner-mac
-          path: ./target/*-runner
+#  build-macos:
+#    runs-on: macos-latest
+#    env:
+#      OS: macos
+#    steps:
+#      - name: Environment
+#        run: set
+#      - uses: actions/checkout@v2
+#      - name: Install graalvm
+#        uses: DeLaGuardo/setup-graalvm@4.0
+#        with:
+#          graalvm: '22.3.0'
+#          java: 'java17'
+#      - name: Install native-image
+#        run: gu install native-image
+#      - name: Build native executable
+#        run: ./mvnw package -Dnative  -DskipTests
+#        env:
+#          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+#      - name: Archive executable
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: runner-mac
+#          path: ./target/*-runner

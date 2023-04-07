@@ -14,5 +14,8 @@
         <local>
             <enabled>true</enabled>
         </local>
+<!--        <remote>-->
+<!--            <enabled>true</enabled>-->
+<!--        </remote>-->
     </buildCache>
 </gradleEnterprise>
