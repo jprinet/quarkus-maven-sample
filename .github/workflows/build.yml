@@ -22,19 +22,19 @@ jobs:
       - name: Build Quarkus Maven extension
         run: |
           cd quarkus-custom-user-data-maven-extension
-          ./mvnw install
+          ./mvnw -B install
           cd ..
       - name: Build native executable
         run: |
           cd quarkus-maven-sample-project
-          ./mvnw package -Dnative -DskipTests
+          ./mvnw -B package -Dnative -DskipTests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
       - name: Archive executable
         uses: actions/upload-artifact@v3
         with:
           name: runner-linux
-          path: ./target/*-runner
+          path: ./quarkus-maven-sample-project/target/*-runner
 
 #  build-win64:
 #    runs-on: windows-latest
