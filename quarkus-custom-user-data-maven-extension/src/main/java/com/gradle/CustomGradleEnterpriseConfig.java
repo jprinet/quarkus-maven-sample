@@ -63,6 +63,9 @@ final class CustomGradleEnterpriseConfig {
                                         .fileSet("quarkusProperties", "src/main/resources",fileSet -> fileSet.include("application.properties").normalizationStrategy(MojoMetadataProvider.Context.FileSet.NormalizationStrategy.RELATIVE_PATH))
                                         .fileSet("generatedSourcesDirectory", fileSet -> {})
                                         .properties("appArtifact", "closeBootstrappedApp", "finalName", "ignoredEntries", "manifestEntries", "manifestSections", "skip", "skipOriginalJarRename", "systemProperties", "properties")
+                                        .property("osName", getOsName())
+                                        .property("osVersion", getOsVersion())
+                                        .property("osArch", getOsArch())
                                         .ignore("project", "buildDir", "mojoExecution", "session", "repoSession", "repos", "pluginRepos")
                                 )
                                 .outputs(outputs -> outputs.file("exe", "${project.build.directory}/${project.name}-${project.version}-runner").cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
@@ -72,6 +75,21 @@ final class CustomGradleEnterpriseConfig {
                 }
             });
         });
+    }
+
+    private String getOsName() {
+        LOGGER.warn(System.getProperty("os.name"));
+        return System.getProperty("os.name");
+    }
+
+    private String getOsVersion() {
+        LOGGER.warn(System.getProperty("os.version"));
+        return System.getProperty("os.version");
+    }
+
+    private String getOsArch() {
+        LOGGER.warn(System.getProperty("os.arch"));
+        return System.getProperty("os.arch");
     }
 
     // Verify that the Quarkus configuration is defined in the Quarkus configuration file (which is defined as goal input) and relies on stable container build
