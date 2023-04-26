@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.gradle.Utils.isNotEmpty;
@@ -95,10 +99,27 @@ final class QuarkusCachingConfig {
                 .fileSet("generatedSourcesDirectory", fileSet -> {
                 })
                 .properties("appArtifact", "closeBootstrappedApp", "finalName", "ignoredEntries", "manifestEntries", "manifestSections", "skip", "skipOriginalJarRename", "systemProperties", "properties")
+                .properties("systemProperties", hashQuarkusEnvironmentVariables())
                 .property("osName", getOsName())
                 .property("osVersion", getOsVersion())
                 .property("osArch", getOsArch())
                 .ignore("project", "buildDir", "mojoExecution", "session", "repoSession", "repos", "pluginRepos");
+    }
+
+    private String hashQuarkusEnvironmentVariables() {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+
+            System.getenv().entrySet().stream()
+                    .filter(e -> e.getKey().startsWith("quarkus."))
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(e -> messageDigest.update((e.getKey()+e.getValue()).getBytes()));
+
+            return Base64.getEncoder().encodeToString(messageDigest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error("Unsupported algorithm", e);
+            throw new IllegalStateException(e);
+        }
     }
 
     private boolean isNativeBuild(String packageType) {

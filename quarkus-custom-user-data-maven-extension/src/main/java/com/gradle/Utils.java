@@ -14,7 +14,12 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -147,6 +152,55 @@ final class Utils {
     }
 
     private Utils() {
+    }
+
+    public static void main(String[] args) {
+        Utils config = new Utils();
+
+        Map<String,String> map1 = new HashMap<>();
+        Map<String,String> map5 = new HashMap<>();
+        map5.put("foo", "bar");
+        Map<String,String> map2 = new HashMap<>();
+        map2.put("quarkus.titi", "1");
+        map2.put("foo", "bar");
+        Map<String,String> map3 = new HashMap<>();
+        map3.put("quarkus.titi", "1");
+        Map<String,String> map4 = new HashMap<>();
+        map4.put("foo", "bar");
+        map4.put("quarkus.titi", "1");
+        Map<String,String> map6 = new HashMap<>();
+        map6.put("quarkus.toto", "42");
+        map6.put("quarkus.titi", "1");
+        Map<String,String> map7 = new HashMap<>();
+        map7.put("quarkus.toto", "1");
+        map7.put("quarkus.titi", "42");
+        Map<String,String> map8 = new HashMap<>();
+        map8.put("quarkus.titi", "42");
+        map8.put("quarkus.toto", "1");
+
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map1));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map5));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map2));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map3));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map4));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map6));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map7));
+        System.out.println(config.testHashQuarkusEnvironmentVariables(map8));
+    }
+
+    private String testHashQuarkusEnvironmentVariables(Map<String,String> test) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+
+            test.entrySet().stream()
+                    .filter(e -> e.getKey().startsWith("quarkus."))
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(e -> messageDigest.update((e.getKey()+e.getValue()).getBytes()));
+
+            return Base64.getEncoder().encodeToString(messageDigest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }

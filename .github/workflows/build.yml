@@ -95,6 +95,16 @@ jobs:
           ./mvnw package -DskipTests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+          quarkus.foo: "foo"
+          quarkus.bar: "bar"
+      - name: Build native executable with different quarkus variable
+        run: |
+          cd quarkus-maven-sample-project
+          ./mvnw package -DskipTests
+        env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+          quarkus.foo: "foo"
+          quarkus.bar: "bar2"
       - name: Archive executable
         uses: actions/upload-artifact@v3
         with:
