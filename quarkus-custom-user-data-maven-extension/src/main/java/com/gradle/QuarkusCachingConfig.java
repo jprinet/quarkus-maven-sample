@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static com.gradle.Utils.isNotEmpty;
 
@@ -99,7 +100,7 @@ final class QuarkusCachingConfig {
                 .fileSet("generatedSourcesDirectory", fileSet -> {
                 })
                 .properties("appArtifact", "closeBootstrappedApp", "finalName", "ignoredEntries", "manifestEntries", "manifestSections", "skip", "skipOriginalJarRename", "systemProperties", "properties")
-                .properties("systemProperties", hashQuarkusEnvironmentVariables())
+                .property("quarkusEnv", hashQuarkusEnvironmentVariables())
                 .property("osName", getOsName())
                 .property("osVersion", getOsVersion())
                 .property("osArch", getOsArch())
