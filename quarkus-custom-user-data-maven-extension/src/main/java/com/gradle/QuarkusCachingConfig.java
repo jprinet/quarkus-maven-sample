@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.AbstractMap;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Properties;
@@ -38,11 +39,13 @@ final class QuarkusCachingConfig {
             context.withPlugin("quarkus-maven-plugin", () -> {
                 if ("build".equals(context.getMojoExecution().getExecutionId())) {
                     try {
-                        String packageType = getProperty(QUARKUS_KEY_PACKAGE_TYPE);
+                        Map<String, String> quarkusMavenProperties = getQuarkusMavenProperties(context);
+
+                        String packageType = getProperty(quarkusMavenProperties, QUARKUS_KEY_PACKAGE_TYPE);
                         if(isNativeBuild(packageType)) {
-                            configureCacheForNativeBuild(context);
+                            configureCacheForNativeBuild(context, quarkusMavenProperties);
                         } else if(isUberJarBuild(packageType)) {
-                            configureCacheForUberJarBuild(context);
+                            configureCacheForUberJarBuild(context, quarkusMavenProperties);
                         } else {
                             LOGGER.info("Caching disabled for Quarkus build, package type is not supported");
                         }
@@ -54,16 +57,40 @@ final class QuarkusCachingConfig {
         });
     }
 
-    // Read Quarkus property from application.properties
-    private String getProperty(String propertyKey) {
+    private Map<String, String> getQuarkusMavenProperties(MojoMetadataProvider.Context context) {
+        return context.getProject().getProperties().entrySet().stream()
+                .filter(e -> e.getKey().toString().startsWith("quarkus."))
+                .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+    }
+
+    // Read Quarkus property by order of precedence from:
+    // - maven properties
+    // - environment
+    // - application.properties
+    private String getProperty(Map<String, String> quarkusMavenProperties, String propertyKey) {
         //FIXME handle classpath location for configuration file
-        String propertyValue = getPropertyFromConfigurationFileOrNull(propertyKey);
+        String propertyValue = getPropertyFromMavenPropertiesOrNull(quarkusMavenProperties, propertyKey);
         if(propertyValue == null) {
-            LOGGER.warn("Please define quarkus configuration property [{}] to allow goal caching", propertyKey);
-            throw new IllegalArgumentException(String.format("Property [%s] is not set", propertyKey));
+            propertyValue = getPropertyFromEnvironmentOrNull(propertyKey);
+            if(propertyValue == null) {
+                propertyValue = getPropertyFromConfigurationFileOrNull(propertyKey);
+                if(propertyValue == null) {
+                    LOGGER.warn("Please define quarkus configuration property [{}] to allow goal caching", propertyKey);
+                    throw new IllegalArgumentException(String.format("Property [%s] is not set", propertyKey));
+                }
+            }
         }
 
+
         return propertyValue;
+    }
+
+    private String getPropertyFromMavenPropertiesOrNull(Map<String, String> quarkusMavenProperties, String propertyKey) {
+        return quarkusMavenProperties.get(propertyKey);
+    }
+
+    private String getPropertyFromEnvironmentOrNull(String propertyKey) {
+        return System.getenv().get(propertyKey);
     }
 
     private String getPropertyFromConfigurationFileOrNull(String propertyKey) {
@@ -77,30 +104,31 @@ final class QuarkusCachingConfig {
         }
     }
 
-    private void configureCacheForNativeBuild(MojoMetadataProvider.Context context) {
+    private void configureCacheForNativeBuild(MojoMetadataProvider.Context context, Map<String, String> quarkusMavenProperties) {
         LOGGER.info("Configuring caching for Quarkus native build");
-        if(isInContainerBuild()) {
-            context.inputs(this::getInputs)
+        if(isInContainerBuild(quarkusMavenProperties)) {
+            context.inputs(inputs -> getInputs(inputs, quarkusMavenProperties))
                    .outputs(outputs -> outputs.file("exe", "${project.build.directory}/${project.name}-${project.version}-runner").cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
         } else {
             LOGGER.warn("Caching disabled for Quarkus build, please use stable container build");
         }
     }
 
-    private void configureCacheForUberJarBuild(MojoMetadataProvider.Context context) {
+    private void configureCacheForUberJarBuild(MojoMetadataProvider.Context context, Map<String, String> quarkusMavenProperties) {
         LOGGER.info("Configuring caching for Quarkus uberjar build");
-        context.inputs(this::getInputs)
-               .outputs(outputs -> outputs.file("jar", "${project.build.directory}/${project.name}-${project.version}-*.jar").cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
+        context.inputs(inputs -> getInputs(inputs, quarkusMavenProperties))
+                .outputs(outputs -> outputs.file("jar", "${project.build.directory}/${project.name}-${project.version}-*.jar").cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
     }
 
     // Reusing the same inputs for Jar and Native. The created Jar is indeed OS dependent.
-    private MojoMetadataProvider.Context.Inputs getInputs(MojoMetadataProvider.Context.Inputs inputs) {
+    private MojoMetadataProvider.Context.Inputs getInputs(MojoMetadataProvider.Context.Inputs inputs, Map<String, String> quarkusMavenProperties) {
         return inputs
                 .fileSet("quarkusProperties", "src/main/resources", fileSet -> fileSet.include("application.properties").normalizationStrategy(MojoMetadataProvider.Context.FileSet.NormalizationStrategy.RELATIVE_PATH))
                 .fileSet("generatedSourcesDirectory", fileSet -> {
                 })
                 .properties("appArtifact", "closeBootstrappedApp", "finalName", "ignoredEntries", "manifestEntries", "manifestSections", "skip", "skipOriginalJarRename", "systemProperties", "properties")
                 .property("quarkusEnv", hashQuarkusEnvironmentVariables())
+                .property("quarkusMavenProps", hashQuarkusMavenProperties(quarkusMavenProperties))
                 .property("osName", getOsName())
                 .property("osVersion", getOsVersion())
                 .property("osArch", getOsArch())
@@ -123,6 +151,26 @@ final class QuarkusCachingConfig {
         }
     }
 
+    private String hashQuarkusMavenProperties(Map<String, String> quarkusMavenProperties) {
+        if(quarkusMavenProperties != null) {
+            try {
+                MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+
+                quarkusMavenProperties.entrySet().stream()
+                        .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue()))
+                        .sorted(Map.Entry.comparingByKey())
+                        .forEach(e -> messageDigest.update((e.getKey()+e.getValue()).getBytes()));
+
+                return Base64.getEncoder().encodeToString(messageDigest.digest());
+            } catch (NoSuchAlgorithmException e) {
+                LOGGER.error("Unsupported algorithm", e);
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return "";
+        }
+    }
+
     private boolean isNativeBuild(String packageType) {
         return QUARKUS_VALUE_PACKAGE_NATIVE.equals(packageType);
     }
@@ -132,9 +180,9 @@ final class QuarkusCachingConfig {
     }
 
     // Verify that the Quarkus configuration is defined in the Quarkus configuration file (which is defined as goal input) and relies on stable container build
-    private boolean isInContainerBuild() {
-        boolean isContainerBuild = Boolean.parseBoolean(getProperty(QUARKUS_KEY_NATIVE_CONTAINER_BUILD));
-        String builderImage = getProperty(QUARKUS_KEY_NATIVE_BUILDER_IMAGE);
+    private boolean isInContainerBuild(Map<String, String> quarkusMavenProperties) {
+        boolean isContainerBuild = Boolean.parseBoolean(getProperty(quarkusMavenProperties, QUARKUS_KEY_NATIVE_CONTAINER_BUILD));
+        String builderImage = getProperty(quarkusMavenProperties, QUARKUS_KEY_NATIVE_BUILDER_IMAGE);
 
         return isContainerBuild && isNotEmpty(builderImage);
     }
