@@ -37,7 +37,7 @@ final class QuarkusCachingConfig {
     void configureQuarkusPluginCache(BuildCacheApi buildCache) {
         buildCache.registerMojoMetadataProvider(context -> {
             context.withPlugin("quarkus-maven-plugin", () -> {
-                if ("build".equals(context.getMojoExecution().getExecutionId())) {
+                if ("build".equals(context.getMojoExecution().getGoal())) {
                     try {
                         Map<String, String> quarkusMavenProperties = getQuarkusMavenProperties(context);
 
@@ -107,8 +107,10 @@ final class QuarkusCachingConfig {
     private void configureCacheForNativeBuild(MojoMetadataProvider.Context context, Map<String, String> quarkusMavenProperties) {
         LOGGER.info("Configuring caching for Quarkus native build");
         if(isInContainerBuild(quarkusMavenProperties)) {
+            String outputFileName = "target/" + context.getProject().getBuild().getFinalName() + "-runner";
+            LOGGER.info("cache output = " + outputFileName);
             context.inputs(inputs -> getInputs(inputs, quarkusMavenProperties))
-                   .outputs(outputs -> outputs.file("exe", "${project.build.directory}/${project.name}-${project.version}-runner").cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
+                   .outputs(outputs -> outputs.file("exe", outputFileName).cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
         } else {
             LOGGER.warn("Caching disabled for Quarkus build, please use stable container build");
         }
@@ -116,8 +118,10 @@ final class QuarkusCachingConfig {
 
     private void configureCacheForUberJarBuild(MojoMetadataProvider.Context context, Map<String, String> quarkusMavenProperties) {
         LOGGER.info("Configuring caching for Quarkus uberjar build");
+        String outputFileName = "target/" + context.getProject().getBuild().getFinalName() + ".jar";
+        LOGGER.info("cache output = " + outputFileName);
         context.inputs(inputs -> getInputs(inputs, quarkusMavenProperties))
-                .outputs(outputs -> outputs.file("jar", "${project.build.directory}/${project.name}-${project.version}-*.jar").cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
+                .outputs(outputs -> outputs.file("jar", outputFileName).cacheable("this plugin has CPU-bound goals with well-defined inputs and outputs"));
     }
 
     // Reusing the same inputs for Jar and Native. The created Jar is indeed OS dependent.
