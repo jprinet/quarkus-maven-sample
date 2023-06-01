@@ -23,7 +23,7 @@ GRADLE_QUARKUS_CACHE_ENABLED=false
 
 ### Goal Inputs
 
-The `QuarkusCachingConfig` makes the Quarkus build goal cacheable by the configurating the following goal inputs:
+The `QuarkusCachingConfig` makes the Quarkus build goal cacheable by configuring the following goal inputs:
 
 #### General inputs
 - The compilation classpath 
