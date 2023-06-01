@@ -1,18 +1,18 @@
 # Custom Maven Extension to make Quarkus build goal cacheable
 
-This project performs programmatic configuration of the Gradle Enterprise Build Cache through a Maven extension. See [there](https://docs.gradle.com/enterprise/maven-extension/#custom_extension) for more details. 
+This project performs programmatic configuration of the Gradle Enterprise Build Cache through a Maven extension. See [here](https://docs.gradle.com/enterprise/maven-extension/#custom_extension) for more details. 
 
 This project is based on [the CCUD Maven extension](https://github.com/gradle/common-custom-user-data-maven-extension).
 
-The modifications required to make the Quarkus build goal cacheable are isolated in the [QuarkusCachingConfig](./src/main/java/com/gradle/QuarkusCachingConfig.java) class.
+The modifications required to make the Quarkus build goal cacheable are isolated to the [QuarkusCachingConfig](./src/main/java/com/gradle/QuarkusCachingConfig.java) class.
 
 ## Limitations
 
 Only the native and uber-jar [packaging types](https://quarkus.io/guides/maven-tooling#quarkus-package-pkg-package-config_quarkus.package.type) can be made cacheable.
 
-The native packaging is cacheable only if the in-container build strategy is configured. This allows to have a build as reproducible as possible (some timestamps and instructions ordering are changing build over build even on the same system).
+The native packaging is cacheable only if the in-container build strategy is configured. This in-container build strategy means the build is as reproducible as possible. Even so, some timestamps and instruction ordering may be different even when built on the same system in the same enviroment.
 
-It is possible to configure the plugin in some files located in the classpath (```application.properties``` and ```microprofile-config.properties```), however in the current implementation those files can only be located in the current module where the goal is configured (in opposition to a 3rd party lib).
+It is possible to configure the plugin via certain files located in the classpath (```application.properties``` and ```microprofile-config.properties```), however in the current implementation those files will only be considered as part of the cache key if they are located in the current module where the goal is configured. They will not be considered as part of the cache key if they are located in a 3rd party lib.
 
 ## Configuration
 
@@ -23,7 +23,7 @@ GRADLE_QUARKUS_CACHE_ENABLED=false
 
 ### Goal Inputs
 
-The goal can be made cacheable by configuring the goal inputs which will be used to compute the goal cache key.
+The `QuarkusCachingConfig` makes the Quarkus build goal cacheable by configuring the following goal inputs:
 
 #### General inputs
 - The compilation classpath 
@@ -31,7 +31,7 @@ The goal can be made cacheable by configuring the goal inputs which will be used
 - OS details (name, version, arch)
 
 ### Quarkus properties
-See [there](https://quarkus.io/guides/config-reference#configuration-sources) for details
+See [here](https://quarkus.io/guides/config-reference#configuration-sources) for details
 
 - Quarkus System properties
 - Quarkus Maven properties
