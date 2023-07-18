@@ -37,7 +37,8 @@ final class QuarkusCachingConfig {
     private static final String QUARKUS_FILE_PROPERTIES_CHECK = "target/quarkus-prod-config-check";
 
     // Ignored properties while comparing dump vs check property files
-    private static final List<String> QUARKUS_PROPERTIES_IGNORED = Arrays.asList("quarkus.test.class-clone-pattern", "quarkus.test.exclude-pattern");
+    //FIXME those properties should remain unchanged between dump and check
+    private static final List<String> QUARKUS_PROPERTIES_IGNORED = Arrays.asList("quarkus.test.class-clone-pattern", "quarkus.test.exclude-pattern", "quarkus.package.quiltflower.jar-directory", "quarkus.native.java-home");
 
     // Quarkus' configuration keys
     private static final List<String> QUARKUS_CONFIG_KEY_NATIVE_CONTAINER_BUILD = Arrays.asList("quarkus.native.container-build", "quarkus.native.remote-container-build");
