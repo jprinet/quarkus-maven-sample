@@ -207,7 +207,10 @@ final class QuarkusCachingConfig {
             outputs.file("quarkusExe", quarkusExeFileName);
             outputs.file("quarkusJar", quarkusJarFileName);
             outputs.file("quarkusUberJar", quarkusUberJarFileName);
-            outputs.file("quarkusProperties", QUARKUS_FILE_PROPERTIES_DUMP);
+
+            // Do not declare dump config as goal output to avoid
+            // Goal execution marked as not cacheable: Build caching was not enabled for this goal execution because pre-existing files were modified. Cacheable goals may only create new files.
+            // outputs.file("quarkusProperties", QUARKUS_FILE_PROPERTIES_DUMP);
         });
     }
 }
