@@ -38,7 +38,7 @@ final class QuarkusCachingConfig {
 
     // Ignored properties while comparing dump vs check property files
     //FIXME those properties should remain unchanged between dump and check
-    private static final List<String> QUARKUS_PROPERTIES_IGNORED = Arrays.asList("quarkus.test.class-clone-pattern", "quarkus.test.exclude-pattern", "quarkus.package.quiltflower.jar-directory", "quarkus.native.java-home");
+    //private static final List<String> QUARKUS_PROPERTIES_IGNORED = Arrays.asList("quarkus.test.class-clone-pattern", "quarkus.test.exclude-pattern");
 
     // Quarkus' configuration keys
     private static final List<String> QUARKUS_CONFIG_KEY_NATIVE_CONTAINER_BUILD = Arrays.asList("quarkus.native.container-build", "quarkus.native.remote-container-build");
@@ -111,7 +111,7 @@ final class QuarkusCachingConfig {
                 Set<Map.Entry<Object, Object>> quarkusPropertiesCopy = new HashSet<>(quarkusProperties.entrySet());
                 quarkusPropertiesCopy.removeAll(quarkusCheckProperties.entrySet());
 
-                if(quarkusPropertiesCopy.stream().anyMatch(e -> !QUARKUS_PROPERTIES_IGNORED.contains(e.getKey().toString()))) {
+                if(quarkusPropertiesCopy.size() > 0) {
                     LOGGER.info("Quarkus properties have changed [" + quarkusPropertiesCopy.stream().map(e -> e.getKey().toString()).collect(Collectors.joining(", ")) + "]");
                 } else {
                     return true;
