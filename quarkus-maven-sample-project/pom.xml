@@ -16,9 +16,7 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
         <quarkus.config-tracking.enabled>true</quarkus.config-tracking.enabled>
-        <quarkus.config-dump.file-prefix>quarkus</quarkus.config-dump.file-prefix>
-<!--        <quarkus.config-tracking.use-user-home-alias-in-paths>true</quarkus.config-tracking.use-user-home-alias-in-paths>-->
-<!--        <quarkus.config-tracking.exclude>quarkus.test.class-clone-pattern,quarkus.test.exclude-pattern,quarkus.package.quiltflower.jar-directory,quarkus.native.java-home</quarkus.config-tracking.exclude>-->
+        <quarkus.config-tracking.exclude>quarkus.test.class-clone-pattern,quarkus.test.exclude-pattern</quarkus.config-tracking.exclude>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -32,11 +30,6 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>io.quarkiverse.quarkus-config-interceptor</groupId>
-            <artifactId>quarkus-config-interceptor</artifactId>
-            <version>999-SNAPSHOT</version>
-        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-resteasy-reactive</artifactId>
