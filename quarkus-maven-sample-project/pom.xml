@@ -16,7 +16,6 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
         <quarkus.config-tracking.enabled>true</quarkus.config-tracking.enabled>
-        <quarkus.config-tracking.exclude>quarkus.test.class-clone-pattern,quarkus.test.exclude-pattern</quarkus.config-tracking.exclude>
     </properties>
     <dependencyManagement>
         <dependencies>
