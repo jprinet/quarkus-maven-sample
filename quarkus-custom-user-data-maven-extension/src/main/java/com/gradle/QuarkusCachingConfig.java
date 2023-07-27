@@ -29,12 +29,17 @@ final class QuarkusCachingConfig {
     private static final List<String> QUARKUS_CONFIG_KEY_NATIVE_CONTAINER_BUILD = Arrays.asList("quarkus.native.container-build", "quarkus.native.remote-container-build");
     private static final String QUARKUS_CONFIG_KEY_NATIVE_BUILDER_IMAGE = "quarkus.native.builder-image";
     private static final String QUARKUS_CONFIG_KEY_PACKAGE_TYPE = "quarkus.package.type";
+    private static final String QUARKUS_CONFIG_KEY_GRAALVM_HOME = "quarkus.native.graalvm-home";
+    private static final String QUARKUS_CONFIG_KEY_JAVA_HOME = "quarkus.native.java-home";
 
     // Quarkus' cacheable package types
     private static final List<String> QUARKUS_CACHEABLE_PACKAGE_TYPES = Arrays.asList("jar", "legacy-jar", "uber-jar", "native");
 
     // Quarkus' properties which are considered as file inputs
     private static final List<String> QUARKUS_KEYS_AS_FILE_INPUTS = Arrays.asList("quarkus.docker.dockerfile-native-path", "quarkus.docker.dockerfile-jvm-path", "quarkus.openshift.jvm-dockerfile", "quarkus.openshift.native-dockerfile");
+
+    // Quarkus' properties which should be ignored (the JDK / GraalVM version are extra inputs)
+    private static final List<String> QUARKUS_IGNORED_PROPERTIES = Arrays.asList(QUARKUS_CONFIG_KEY_GRAALVM_HOME, QUARKUS_CONFIG_KEY_JAVA_HOME);
 
     // Inner class to encapsulate Quarkus extension configuration
     private static final class QuarkusExtensionConfiguration {
@@ -67,7 +72,8 @@ final class QuarkusCachingConfig {
 
         private QuarkusExtensionConfiguration(MojoMetadataProvider.Context context) {
             // loading default properties
-            configuration.setProperty(GRADLE_QUARKUS_KEY_CACHE_ENABLED, System.getenv(GRADLE_QUARKUS_KEY_CACHE_ENABLED));
+            String isQuarkusCacheEnabledFromEnv = System.getenv(GRADLE_QUARKUS_KEY_CACHE_ENABLED);
+            configuration.setProperty(GRADLE_QUARKUS_KEY_CACHE_ENABLED, isQuarkusCacheEnabledFromEnv != null ? isQuarkusCacheEnabledFromEnv : "");
             configuration.setProperty(GRADLE_QUARKUS_KEY_BUILD_PROFILE, GRADLE_QUARKUS_DEFAULT_BUILD_PROFILE);
             configuration.setProperty(GRADLE_QUARKUS_KEY_DUMP_CONFIG_PREFIX, GRADLE_QUARKUS_DEFAULT_DUMP_CONFIG_PREFIX);
             configuration.setProperty(GRADLE_QUARKUS_KEY_DUMP_CONFIG_SUFFIX, GRADLE_QUARKUS_DEFAULT_DUMP_CONFIG_SUFFIX);
@@ -76,13 +82,14 @@ final class QuarkusCachingConfig {
             String extensionConfigurationFileFromEnv = System.getenv(GRADLE_QUARKUS_KEY_CONFIG_FILE);
             String extensionConfigurationFileFromMaven =
                 context.getProject().getProperties().getProperty(
-                    GRADLE_QUARKUS_KEY_CONFIG_FILE.toLowerCase().replace("_",".")
+                    GRADLE_QUARKUS_KEY_CONFIG_FILE.toLowerCase().replace("_","."),
+                    ""
                 );
 
             if(extensionConfigurationFileFromEnv != null && !extensionConfigurationFileFromEnv.isEmpty()) {
                 // override default properties from configuration file defined in the environment
                 configuration.putAll(loadProperties(extensionConfigurationFileFromEnv));
-            } else if(extensionConfigurationFileFromMaven != null && !extensionConfigurationFileFromMaven.isEmpty()) {
+            } else if(!extensionConfigurationFileFromMaven.isEmpty()) {
                 // override default properties from configuration file defined as Maven property
                 configuration.putAll(loadProperties(extensionConfigurationFileFromMaven));
             }
@@ -160,10 +167,12 @@ final class QuarkusCachingConfig {
             try (InputStream input = new FileInputStream(propertyFile)) {
                 props.load(input);
             } catch (IOException e) {
-                //TODO check props is not null
                 LOGGER.error("Error while loading " + propertyFile, e);
             }
+        } else {
+            LOGGER.info("Quarkus properties not found");
         }
+
         return props;
     }
 
@@ -179,7 +188,7 @@ final class QuarkusCachingConfig {
         Set<Map.Entry<Object, Object>> quarkusPropertiesCopy = new HashSet<>(quarkusProperties.entrySet());
         quarkusPropertiesCopy.removeAll(quarkusCurrentProperties.entrySet());
 
-        if(quarkusPropertiesCopy.size() > 0) {
+        if(quarkusPropertiesCopy.stream().anyMatch(e -> !QUARKUS_IGNORED_PROPERTIES.contains(e.getKey().toString()))) {
             LOGGER.info("Quarkus properties have changed [" + quarkusPropertiesCopy.stream().map(e -> e.getKey().toString()).collect(Collectors.joining(", ")) + "]");
         } else {
             return true;
@@ -190,8 +199,8 @@ final class QuarkusCachingConfig {
 
     // Checking native package type is not required as the container build is set by default to true for non native
     private boolean isInContainerBuild(Properties quarkusProperties) {
-        String builderImage = quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_NATIVE_BUILDER_IMAGE);
-        if(builderImage == null || builderImage.isEmpty()) {
+        String builderImage = quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_NATIVE_BUILDER_IMAGE, "");
+        if(builderImage.isEmpty()) {
             LOGGER.info("Quarkus build is not using a fixed image");
             return false;
         }
@@ -216,6 +225,7 @@ final class QuarkusCachingConfig {
     private void configureInputs(MojoMetadataProvider.Context context, Properties quarkusProperties) {
         context.inputs(inputs -> {
             addOsInputs(inputs);
+            addCompilerInputs(inputs);
             addClasspathInput(context, inputs);
             addMojoInputs(inputs);
             addQuarkusPropertiesInput(inputs);
@@ -227,6 +237,10 @@ final class QuarkusCachingConfig {
         inputs.property("osName", System.getProperty("os.name"))
             .property("osVersion", System.getProperty("os.version"))
             .property("osArch", System.getProperty("os.arch"));
+    }
+
+    private void addCompilerInputs(MojoMetadataProvider.Context.Inputs inputs) {
+        inputs.property("javaVersion", System.getProperty("java.version"));
     }
 
     private void addClasspathInput(MojoMetadataProvider.Context context, MojoMetadataProvider.Context.Inputs inputs) {

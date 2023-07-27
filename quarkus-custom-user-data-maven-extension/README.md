@@ -51,6 +51,7 @@ The `QuarkusCachingConfig` makes the Quarkus build goal cacheable by configuring
 - The compilation classpath
 - Generated sources directory
 - OS details (name, version, arch)
+- JDK version
 
 #### Quarkus properties
 See [here](https://quarkus.io/guides/config-reference#configuration-sources) for details
