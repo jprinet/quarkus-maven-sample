@@ -8,6 +8,6 @@
     <extension>
         <groupId>com.gradle</groupId>
         <artifactId>quarkus-custom-user-data-maven-extension</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0</version>
     </extension>
 </extensions>
