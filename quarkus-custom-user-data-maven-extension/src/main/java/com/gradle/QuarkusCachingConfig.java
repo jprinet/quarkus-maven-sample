@@ -31,9 +31,10 @@ final class QuarkusCachingConfig {
     private static final String QUARKUS_CONFIG_KEY_PACKAGE_TYPE = "quarkus.package.type";
     private static final String QUARKUS_CONFIG_KEY_GRAALVM_HOME = "quarkus.native.graalvm-home";
     private static final String QUARKUS_CONFIG_KEY_JAVA_HOME = "quarkus.native.java-home";
+    private static final String PACKAGE_NATIVE = "native";
 
     // Quarkus' cacheable package types
-    private static final List<String> QUARKUS_CACHEABLE_PACKAGE_TYPES = Arrays.asList("jar", "legacy-jar", "uber-jar", "native");
+    private static final List<String> QUARKUS_CACHEABLE_PACKAGE_TYPES = Arrays.asList("jar", "legacy-jar", "uber-jar", PACKAGE_NATIVE);
 
     // Quarkus' properties which are considered as file inputs
     private static final List<String> QUARKUS_KEYS_AS_FILE_INPUTS = Arrays.asList("quarkus.docker.dockerfile-native-path", "quarkus.docker.dockerfile-jvm-path", "quarkus.openshift.jvm-dockerfile", "quarkus.openshift.native-dockerfile");
@@ -199,17 +200,18 @@ final class QuarkusCachingConfig {
         return false;
     }
 
-    // Checking native package type is not required as the container build is set by default to true for non native
     private boolean isInContainerBuild(Properties quarkusProperties) {
-        String builderImage = quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_NATIVE_BUILDER_IMAGE, "");
-        if(builderImage.isEmpty()) {
-            LOGGER.info("Quarkus build is not using a fixed image");
-            return false;
-        }
+        if(PACKAGE_NATIVE.equals(quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_PACKAGE_TYPE))) {
+            String builderImage = quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_NATIVE_BUILDER_IMAGE, "");
+            if (builderImage.isEmpty()) {
+                LOGGER.info("Quarkus build is not using a fixed image");
+                return false;
+            }
 
-        if(QUARKUS_CONFIG_KEY_NATIVE_CONTAINER_BUILD.stream().noneMatch(key -> Boolean.parseBoolean(quarkusProperties.getProperty(key)))) {
-            LOGGER.info("Quarkus build is not in-container");
-            return false;
+            if (QUARKUS_CONFIG_KEY_NATIVE_CONTAINER_BUILD.stream().noneMatch(key -> Boolean.parseBoolean(quarkusProperties.getProperty(key)))) {
+                LOGGER.info("Quarkus build is not in-container");
+                return false;
+            }
         }
 
         return true;
