@@ -88,10 +88,10 @@ final class QuarkusCachingConfig {
 
             if(extensionConfigurationFileFromEnv != null && !extensionConfigurationFileFromEnv.isEmpty()) {
                 // override default properties from configuration file defined in the environment
-                configuration.putAll(loadProperties(extensionConfigurationFileFromEnv));
+                configuration.putAll(loadProperties(context, extensionConfigurationFileFromEnv));
             } else if(!extensionConfigurationFileFromMaven.isEmpty()) {
                 // override default properties from configuration file defined as Maven property
-                configuration.putAll(loadProperties(extensionConfigurationFileFromMaven));
+                configuration.putAll(loadProperties(context, extensionConfigurationFileFromMaven));
             }
         }
 
@@ -150,10 +150,10 @@ final class QuarkusCachingConfig {
 
     private void configureQuarkusBuildGoal(MojoMetadataProvider.Context context, QuarkusExtensionConfiguration extensionConfiguration) {
         // Load Quarkus build properties
-        Properties quarkusBuildProperties = loadProperties(extensionConfiguration.getDumpConfigFileName());
+        Properties quarkusBuildProperties = loadProperties(context, extensionConfiguration.getDumpConfigFileName());
 
         // Check required configuration
-        if(isQuarkusBuildCacheable(quarkusBuildProperties, extensionConfiguration)) {
+        if(isQuarkusBuildCacheable(context, quarkusBuildProperties, extensionConfiguration)) {
             configureInputs(context, quarkusBuildProperties);
             configureOutputs(context);
         } else {
@@ -161,29 +161,31 @@ final class QuarkusCachingConfig {
         }
     }
 
-    private static Properties loadProperties(String propertyFile) {
+    private static Properties loadProperties(MojoMetadataProvider.Context context, String propertyFile) {
         Properties props = new Properties();
-        if(new File(propertyFile).exists()) {
-            try (InputStream input = new FileInputStream(propertyFile)) {
+        File configFile = new File(context.getProject().getBasedir().getAbsolutePath(), propertyFile);
+
+        if(configFile.exists()) {
+            try (InputStream input = new FileInputStream(configFile)) {
                 props.load(input);
             } catch (IOException e) {
                 LOGGER.error("Error while loading " + propertyFile, e);
             }
         } else {
-            LOGGER.info("Quarkus properties not found");
+            LOGGER.debug(propertyFile + " not found");
         }
 
         return props;
     }
 
-    private boolean isQuarkusBuildCacheable(Properties quarkusBuildProperties, QuarkusExtensionConfiguration extensionConfiguration) {
-        return isQuarkusPropertiesUnchanged(quarkusBuildProperties, extensionConfiguration)
+    private boolean isQuarkusBuildCacheable(MojoMetadataProvider.Context context, Properties quarkusBuildProperties, QuarkusExtensionConfiguration extensionConfiguration) {
+        return isQuarkusPropertiesUnchanged(context, quarkusBuildProperties, extensionConfiguration)
             && isInContainerBuild(quarkusBuildProperties)
             && isPackagingTypeSupported(quarkusBuildProperties);
     }
 
-    private boolean isQuarkusPropertiesUnchanged(Properties quarkusProperties, QuarkusExtensionConfiguration extensionConfiguration) {
-        Properties quarkusCurrentProperties = loadProperties(extensionConfiguration.getCurrentConfigFileName());
+    private boolean isQuarkusPropertiesUnchanged(MojoMetadataProvider.Context context, Properties quarkusProperties, QuarkusExtensionConfiguration extensionConfiguration) {
+        Properties quarkusCurrentProperties = loadProperties(context, extensionConfiguration.getCurrentConfigFileName());
 
         Set<Map.Entry<Object, Object>> quarkusPropertiesCopy = new HashSet<>(quarkusProperties.entrySet());
         quarkusPropertiesCopy.removeAll(quarkusCurrentProperties.entrySet());
