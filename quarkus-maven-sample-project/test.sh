@@ -2,7 +2,7 @@
 
 function assertNoConfigDump() {
     local buildLog=$1
-    local quarkusPropertiesNotFound=$(grep "Quarkus properties not found" ${buildLog} | wc -l)
+    local quarkusPropertiesNotFound=$(grep ".quarkus/quarkus-prod-config-dump not found" ${buildLog} | wc -l)
     local cachingNotPossible=$(grep "Caching not possible for Quarkus goal" ${buildLog} | wc -l)
 
     if [ "${quarkusPropertiesNotFound}" == "0" ] || [ "${cachingNotPossible}" == "0" ]
