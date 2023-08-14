@@ -24,58 +24,18 @@ jobs:
           cd quarkus-custom-user-data-maven-extension
           ./mvnw -B install
           cd ..
-      - name: Build native executable
+      - name: Run test scenario
         run: |
           cd quarkus-maven-sample-project
-          ./mvnw -B package -DskipTests
+          ./test.sh
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
-      - name: Archive executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: runner-linux
-          path: |
-            ./quarkus-maven-sample-project/target/*.jar
-            ./quarkus-maven-sample-project/target/*-runner
 
-#  build-win64:
-#    runs-on: windows-latest
-#    env:
-#      OS: windows
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Install graalvm
-#        uses: DeLaGuardo/setup-graalvm@4.0
-#        with:
-#          graalvm: '22.3.0'
-#          java: 'java17'
-#      - name: Install native-image
-#        run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
-#        shell: cmd
-#      - name: Configure Pagefile
-#        # Increased the page-file size due to memory-consumption of native-image command
-#        # For details see https://github.com/actions/virtual-environments/issues/785
-#        uses: al-cheb/configure-pagefile-action@v1.2
-#      - name: Build native executable
-#        run: |
-#          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-#          mvnw package -Dnative -DskipTests
-#        env:
-#          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
-#        shell: cmd
-#      - name: Archive executable
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: runner-win
-#          path: ./target/*-runner
-
-  build-macos:
-    runs-on: macos-latest
+  build-win64:
+    runs-on: windows-latest
     env:
-      OS: macos
+      OS: windows
     steps:
-      - name: Environment
-        run: set
       - uses: actions/checkout@v2
       - name: Install graalvm
         uses: DeLaGuardo/setup-graalvm@4.0
@@ -83,32 +43,87 @@ jobs:
           graalvm: '22.3.0'
           java: 'java17'
       - name: Install native-image
-        run: gu install native-image
+        run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
+        shell: cmd
+      - name: Configure Pagefile
+        # Increased the page-file size due to memory-consumption of native-image command
+        # For details see https://github.com/actions/virtual-environments/issues/785
+        uses: al-cheb/configure-pagefile-action@v1.2
       - name: Build Quarkus Maven extension
         run: |
-          cd quarkus-custom-user-data-maven-extension
-          ./mvnw -B install
+            cd quarkus-custom-user-data-maven-extension
+            ./mvnw -B install
+            cd ..
+      - name: Run build 1 - Expect no config dump
+        run: |
+            cd quarkus-maven-sample-project
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests
+            cd ..
+        env:
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
+      - name: Run build 2 - Expect cache miss
+        run: |
+            cd quarkus-maven-sample-project
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests
+            cd ..
+        env:
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
+      - name: Run build 3 - Expect cache hit
+        run: |
+            cd quarkus-maven-sample-project
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests
+            cd ..
+        env:
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
+      - name: Run build 4 - Expect property changed
+        run: |
+          cd quarkus-maven-sample-project
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+          ./mvnw -B clean package -DskipTests -Dquarkus.live-reload.retry-interval=15s
           cd ..
-      - name: Build native executable
-        run: |
-          cd quarkus-maven-sample-project
-          ./mvnw package -DskipTests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
-          quarkus.foo: "foo"
-          quarkus.bar: "bar"
-      - name: Build native executable with different quarkus variable
+        shell: cmd
+      - name: Run build 5 - Expect cache hit
         run: |
-          cd quarkus-maven-sample-project
-          ./mvnw package -DskipTests
+            cd quarkus-maven-sample-project
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests -Dquarkus.live-reload.retry-interval=15s
+            cd ..
         env:
-          GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
-          quarkus.foo: "foo"
-          quarkus.bar: "bar2"
-      - name: Archive executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: runner-mac
-          path: |
-            ./quarkus-maven-sample-project/target/*.jar
-            ./quarkus-maven-sample-project/target/*-runner
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
+      - name: Run build 6 - Expect cache miss
+        run: |
+            cd quarkus-maven-sample-project
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s
+            cd ..
+        env:
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
+      - name: Run build 7 - Expect cache hit
+        run: |
+            cd quarkus-maven-sample-project
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s
+            cd ..
+        env:
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
+      - name: Run build 8 - Expect no config dump
+        run: |
+            cd quarkus-maven-sample-project
+            del .quarkus/*-config-dump
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            ./mvnw -B clean package -DskipTests -Dnative
+            cd ..
+        env:
+            GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        shell: cmd
