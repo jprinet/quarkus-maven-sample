@@ -32,7 +32,7 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
 
   build-win64:
-    runs-on: windows-latest
+    runs-on: windows-2019
     env:
       OS: windows
     steps:
@@ -102,7 +102,7 @@ jobs:
       - name: Run build 6 - Expect cache miss
         run: |
             cd quarkus-maven-sample-project
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
             ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s
             cd ..
         env:
@@ -111,7 +111,7 @@ jobs:
       - name: Run build 7 - Expect cache hit
         run: |
             cd quarkus-maven-sample-project
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
             ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s
             cd ..
         env:
@@ -121,7 +121,7 @@ jobs:
         run: |
             cd quarkus-maven-sample-project
             del .quarkus/*-config-dump
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
             ./mvnw -B clean package -DskipTests -Dnative
             cd ..
         env:
