@@ -32,23 +32,22 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
 
   build-win64:
-    runs-on: windows-2019
+    runs-on: windows-latest
     env:
       OS: windows
     steps:
       - uses: actions/checkout@v2
-      - uses: graalvm/setup-graalvm@v1
-        with:
-            version: 22.3.2
-            java-version: 17
-            components: "native-image"
-            cache: 'maven'
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Install graalvm
-#        uses: DeLaGuardo/setup-graalvm@4.0
+#      - uses: graalvm/setup-graalvm@v1
 #        with:
-#          graalvm: '22.3.0'
-#          java: 'java17'
+#            version: 22.3.2
+#            java-version: 17
+#            components: "native-image"
+#            cache: 'maven'
+#            github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install graalvm
+        uses: DeLaGuardo/setup-graalvm@3
+        with:
+            graalvm-version: '20.0.0.java11'
       - name: Install native-image
         run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
         shell: cmd
@@ -110,7 +109,7 @@ jobs:
         run: |
             cd quarkus-maven-sample-project
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            cmd /c 'call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" &&  ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=true -Dquarkus.native.container-build=true'
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=true -Dquarkus.native.container-build=true
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
@@ -119,7 +118,7 @@ jobs:
         run: |
             cd quarkus-maven-sample-project
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            cmd /c 'call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build'
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
@@ -129,7 +128,7 @@ jobs:
             cd quarkus-maven-sample-project
             del .quarkus/*-config-dump
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            cmd /c 'call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.native.container-build'
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.native.container-build
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
