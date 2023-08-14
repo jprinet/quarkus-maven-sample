@@ -37,11 +37,18 @@ jobs:
       OS: windows
     steps:
       - uses: actions/checkout@v2
-      - name: Install graalvm
-        uses: DeLaGuardo/setup-graalvm@4.0
+      - uses: graalvm/setup-graalvm@v1
         with:
-          graalvm: '22.3.0'
-          java: 'java17'
+            version: 22.3.2
+            java-version: 17
+            components: "native-image"
+            cache: 'maven'
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Install graalvm
+#        uses: DeLaGuardo/setup-graalvm@4.0
+#        with:
+#          graalvm: '22.3.0'
+#          java: 'java17'
       - name: Install native-image
         run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
         shell: cmd
