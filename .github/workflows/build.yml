@@ -32,7 +32,7 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
 
   build-win64:
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
       OS: windows
     steps:
@@ -113,8 +113,10 @@ jobs:
       - name: Run build 6 - Expect cache miss
         run: |
             cd quarkus-maven-sample-project
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=false
+            set VCVARS="C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            if not exist %VCVARS% set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            call %VCVARS%
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
@@ -122,8 +124,10 @@ jobs:
       - name: Run build 7 - Expect cache hit
         run: |
             cd quarkus-maven-sample-project
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=false
+            set VCVARS="C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            if not exist %VCVARS% set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            call %VCVARS%
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
@@ -132,8 +136,10 @@ jobs:
         run: |
             cd quarkus-maven-sample-project
             del .quarkus/*-config-dump
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.native.container-build=false
+            set VCVARS="C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            if not exist %VCVARS% set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            call %VCVARS%
+            ./mvnw -B clean package -DskipTests -Dnative
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
