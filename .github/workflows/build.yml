@@ -37,24 +37,29 @@ jobs:
       OS: windows
     steps:
       - uses: actions/checkout@v2
-#      - uses: graalvm/setup-graalvm@v1
-#        with:
-#            version: 22.3.2
-#            java-version: 17
-#            components: "native-image"
-#            cache: 'maven'
-#            github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install graalvm
-        uses: DeLaGuardo/setup-graalvm@3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
         with:
-            graalvm-version: '20.0.0.java11'
-      - name: Install native-image
-        run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
-        shell: cmd
-      - name: Configure Pagefile
-        # Increased the page-file size due to memory-consumption of native-image command
-        # For details see https://github.com/actions/virtual-environments/issues/785
-        uses: al-cheb/configure-pagefile-action@v1.2
+          distribution: temurin
+          java-version: 11
+      - name: Install cl.exe
+        uses: ilammy/msvc-dev-cmd@v1
+      - uses: microsoft/setup-msbuild@v1
+      - name: Setup GraalVM
+        id: setup-graalvm
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: 'mandrel-latest'
+          java-version: '17'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Install native-image
+#        run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
+#        shell: cmd
+#      - name: Configure Pagefile
+#        # Increased the page-file size due to memory-consumption of native-image command
+#        # For details see https://github.com/actions/virtual-environments/issues/785
+#        uses: al-cheb/configure-pagefile-action@v1.2
       - name: Build Quarkus Maven extension
         run: |
             cd quarkus-custom-user-data-maven-extension
@@ -109,7 +114,7 @@ jobs:
         run: |
             cd quarkus-maven-sample-project
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:22.3.2-java17-amd64
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=false
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
@@ -118,7 +123,7 @@ jobs:
         run: |
             cd quarkus-maven-sample-project
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:22.3.2-java17-amd64
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.live-reload.retry-interval=15s -Dquarkus.native.container-build=false
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
@@ -128,7 +133,7 @@ jobs:
             cd quarkus-maven-sample-project
             del .quarkus/*-config-dump
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:22.3.2-java17-amd64
+            ./mvnw -B clean package -DskipTests -Dnative -Dquarkus.native.container-build=false
             cd ..
         env:
             GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
