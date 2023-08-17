@@ -22,6 +22,26 @@ Only the *native*, *uber-jar*, *jar* and *legacy-jar* [packaging types](https://
 The native packaging is cacheable only if the in-container build strategy (```quarkus.native.container-build=true```) is configured along with a fixed build image (```quarkus.native.builder-image```).
 This in-container build strategy means the build is as reproducible as possible. Even so, some timestamps and instruction ordering may be different even when built on the same system in the same environment.
 
+## Application
+
+Reference the extension in ```.mvn/extensions.xml```.
+This extension requires the gradle-enterprise-maven-extension.
+
+```
+<extensions>
+    <extension>
+        <groupId>com.gradle</groupId>
+        <artifactId>gradle-enterprise-maven-extension</artifactId>
+        <version>1.18.1</version>
+    </extension>
+    <extension>
+        <groupId>com.gradle</groupId>
+        <artifactId>quarkus-build-cache-maven-extension</artifactId>
+        <version>1.0.0</version>
+    </extension>
+<extensions>
+```
+
 ## Configuration
 
 The caching can be disabled by setting an environment variable:

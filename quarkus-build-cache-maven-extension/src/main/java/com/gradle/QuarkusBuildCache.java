@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 /**
  * Caching instructions for the Quarkus build goal.
  */
-final class QuarkusCachingConfig {
+final class QuarkusBuildCache {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CustomGradleEnterpriseConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(QuarkusBuildCache.class);
 
     // Quarkus' configuration keys
     private static final List<String> QUARKUS_CONFIG_KEY_NATIVE_CONTAINER_BUILD = Arrays.asList("quarkus.native.container-build", "quarkus.native.remote-container-build");
@@ -132,7 +132,7 @@ final class QuarkusCachingConfig {
         }
     }
 
-    void configureQuarkusPluginCache(BuildCacheApi buildCache) {
+    void configureBuildCache(BuildCacheApi buildCache) {
         buildCache.registerMojoMetadataProvider(context -> {
             context.withPlugin("quarkus-maven-plugin", () -> {
                 if("build".equals(context.getMojoExecution().getGoal())) {
@@ -271,10 +271,14 @@ final class QuarkusCachingConfig {
     private void addQuarkusFilesInputs(MojoMetadataProvider.Context.Inputs inputs, Properties quarkusProperties) {
         for(String quarkusFilePropertyKey : QUARKUS_KEYS_AS_FILE_INPUTS) {
             String quarkusFilePropertyValue = quarkusProperties.getProperty(quarkusFilePropertyKey);
-            if(Utils.isNotEmpty(quarkusFilePropertyValue)) {
+            if(isNotEmpty(quarkusFilePropertyValue)) {
                 inputs.fileSet(quarkusFilePropertyKey, new File(quarkusFilePropertyValue), fileSet -> fileSet.normalizationStrategy(MojoMetadataProvider.Context.FileSet.NormalizationStrategy.RELATIVE_PATH));
             }
         }
+    }
+
+    private boolean isNotEmpty(String value) {
+        return value != null && !value.isEmpty();
     }
 
     private void configureOutputs(MojoMetadataProvider.Context context) {
