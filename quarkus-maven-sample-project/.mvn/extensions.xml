@@ -3,11 +3,16 @@
     <extension>
         <groupId>com.gradle</groupId>
         <artifactId>gradle-enterprise-maven-extension</artifactId>
-        <version>1.16.6</version>
+        <version>1.18.1</version>
     </extension>
     <extension>
         <groupId>com.gradle</groupId>
-        <artifactId>quarkus-custom-user-data-maven-extension</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <artifactId>common-custom-user-data-maven-extension</artifactId>
+        <version>1.12</version>
+    </extension>
+    <extension>
+        <groupId>com.gradle</groupId>
+        <artifactId>quarkus-build-cache-maven-extension</artifactId>
+        <version>1.0.0</version>
     </extension>
 </extensions>

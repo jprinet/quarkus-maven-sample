@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>quarkus-custom-user-data-maven-extension</module>
+        <module>quarkus-build-cache-maven-extension</module>
         <module>quarkus-maven-sample-project</module>
     </modules>
 </project>
