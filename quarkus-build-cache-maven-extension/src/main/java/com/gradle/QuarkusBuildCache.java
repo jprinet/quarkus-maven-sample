@@ -152,9 +152,10 @@ final class QuarkusBuildCache {
     private void configureQuarkusBuildGoal(MojoMetadataProvider.Context context, QuarkusExtensionConfiguration extensionConfiguration) {
         // Load Quarkus build properties
         Properties quarkusBuildProperties = loadProperties(context, extensionConfiguration.getDumpConfigFileName());
+        Properties quarkusCurrentProperties = loadProperties(context, extensionConfiguration.getCurrentConfigFileName());
 
         // Check required configuration
-        if(isQuarkusBuildCacheable(context, quarkusBuildProperties, extensionConfiguration)) {
+        if(isQuarkusBuildCacheable(context, quarkusBuildProperties, quarkusCurrentProperties)) {
             configureInputs(context, quarkusBuildProperties);
             configureOutputs(context);
         } else {
@@ -179,14 +180,13 @@ final class QuarkusBuildCache {
         return props;
     }
 
-    private boolean isQuarkusBuildCacheable(MojoMetadataProvider.Context context, Properties quarkusBuildProperties, QuarkusExtensionConfiguration extensionConfiguration) {
-        return isQuarkusPropertiesUnchanged(context, quarkusBuildProperties, extensionConfiguration)
-            && isInContainerBuild(quarkusBuildProperties)
-            && isPackagingTypeSupported(quarkusBuildProperties);
+    private boolean isQuarkusBuildCacheable(MojoMetadataProvider.Context context, Properties quarkusBuildProperties, Properties quarkusCurrentProperties) {
+        return isPackagingTypeSupported(quarkusCurrentProperties)
+                && isNotNativeOrInContainerNativeBuild(quarkusCurrentProperties)
+                && isQuarkusPropertiesUnchanged(context, quarkusBuildProperties, quarkusCurrentProperties);
     }
 
-    private boolean isQuarkusPropertiesUnchanged(MojoMetadataProvider.Context context, Properties quarkusProperties, QuarkusExtensionConfiguration extensionConfiguration) {
-        Properties quarkusCurrentProperties = loadProperties(context, extensionConfiguration.getCurrentConfigFileName());
+    private boolean isQuarkusPropertiesUnchanged(MojoMetadataProvider.Context context, Properties quarkusProperties, Properties quarkusCurrentProperties) {
 
         Set<Map.Entry<Object, Object>> quarkusPropertiesCopy = new HashSet<>(quarkusProperties.entrySet());
         quarkusPropertiesCopy.removeAll(quarkusCurrentProperties.entrySet());
@@ -200,7 +200,7 @@ final class QuarkusBuildCache {
         return false;
     }
 
-    private boolean isInContainerBuild(Properties quarkusProperties) {
+    private boolean isNotNativeOrInContainerNativeBuild(Properties quarkusProperties) {
         if(PACKAGE_NATIVE.equals(quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_PACKAGE_TYPE))) {
             String builderImage = quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_NATIVE_BUILDER_IMAGE, "");
             if (builderImage.isEmpty()) {
@@ -218,8 +218,9 @@ final class QuarkusBuildCache {
     }
 
     private boolean isPackagingTypeSupported(Properties quarkusProperties) {
-        if(QUARKUS_CACHEABLE_PACKAGE_TYPES.stream().noneMatch(key -> key.equals(quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_PACKAGE_TYPE)))) {
-            LOGGER.info("Quarkus package type is not cacheable");
+        String packageType = quarkusProperties.getProperty(QUARKUS_CONFIG_KEY_PACKAGE_TYPE);
+        if(packageType == null || !QUARKUS_CACHEABLE_PACKAGE_TYPES.contains(packageType)) {
+            LOGGER.info("Quarkus package type " + packageType + " is not cacheable");
             return false;
         }
 
