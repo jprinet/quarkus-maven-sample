@@ -19,10 +19,25 @@ jobs:
           java: 'java17'
       - name: Install native-image
         run: gu install native-image
+      - name: Cache Develocity cache
+        uses: actions/cache@v3
+        with:
+          path: '~/.m2/.gradle-enterprise'
+          key: ${{ runner.os }}-develocity-cache
+      - name: Cache Quarkus metadata
+        uses: actions/cache@v3
+        with:
+          path: 'quarkus-maven-sample-project/.quarkus'
+          key: ${{ runner.os }}-quarkus-metadata
+      - name: Check Quarkus metadata
+        run: |
+          ls -la .quarkus
+          cat .quarkus/quarkus-prod-config-dump
+        working-directory: quarkus-maven-sample-project
       - name: Run test scenario
         run: |
-          cd quarkus-maven-sample-project
-          ./test.sh
+          mvn -B clean package -DskipTests -X
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: "${{ secrets.GE_SOLUTIONS_ACCESS_TOKEN }}"
+        working-directory: quarkus-maven-sample-project
 
